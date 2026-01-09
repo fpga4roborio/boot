@@ -1,0 +1,82 @@
+DeviceCode=0x7AAE
+DeviceDesc=roboRIO 2.0
+FPGADeviceCode=0x7AAF
+TargetClass=cRIO
+USBDevice=0x7AAE
+USBProduct=NI roboRIO 2.0
+USBProductID=0x762F
+USBVendorID=0x3923
+autoload=n
+backupeth1addroffset=0x7fa
+backupethaddroffset=0x7f4
+backuppage=0x41F800
+backupserialoffset=0x7f0
+backupusbgadgetethaddroffset=0x7ea
+baudrate=115200
+boot_pxe=dcache off; while sleep 1; do setenv pxefile_addr_r $loadaddr; dhcp && if pxe get; then setenv kernel_addr_r $loadaddr; setenv ramdisk_addr_r $verifyaddr; setenv fdt_addr_r 0x7FF8000; pxe boot; fi; done;
+boot_runmode=if ext4load mmc 1:1 $loadaddr linux_runmode.itb && imi $loadaddr; then setenv verify n; source $loadaddr:bootscript; else run boot_safemode; fi;
+boot_safemode=if ext4load mmc 1:1 $loadaddr .safe/linux_safemode.itb && imi $loadaddr; then setenv verify n; source $loadaddr:bootscript; else echo $safemode_err; run recoverycmd; run recoverybootcmd;fi;
+bootcmd=if test $bootmode = safemode; then run boot_safemode; elif test \\"${ispxeboot}\\" = 1; then run boot_pxe; else run boot_runmode; fi
+bootcount=28
+bootdelay=-2
+console=ttyS0,115200
+consolecmd=setenv console ttyS0,$baudrate
+consoleoutcmd=if test -n \\"$isconsoleout\\"; then run consolecmd; if test \\"$bootdelay\\" -gt 0; then setenv silent; setenv consoleparam console=$console; else setenv consoleparam console=$console quiet; fi; conprobe; run sc; else setenv consoleparam console= quiet; setenv stderr nulldev; setenv stdin nulldev; setenv stdout nulldev; setenv bootdelay -2; fi;
+consoleparam=console= quiet
+dhcpenabled=1
+dhcpipaddr=10.65.20.72
+eraseqspi=sf probe 0 0 0;sf erase 0 0x1000000;
+ethaddr=00:80:2f:35:c4:66
+evaldip=if test ${cpld.safemode} -ne 0 -o \\"${safemode.enabled}\\" != false -o \\"${bootmode}\\" = safemode; then bootmode=safemode; fi; if test ${cpld.ipreset} -ne 0 -o \\"${ipreset.enabled}\\" != false; then isipreset=1; fi; if test ${cpld.consoleout} -ne 0 -o \\"${consoleout.enabled}\\" != false; then isconsoleout=1; fi; if test \\"${nofpgaapp.enabled}\\" != false; then isnofpgaapp=1; fi; if test ${cpld.softboot} -eq 0 -a ${cpld.resetbybutton} -ne 0 -a ${cpld.safemode} -ne 0; then isforcedrecoverymode=1; fi; if test \\"${pxeboot.enabled}\\" != false; then ispxeboot=1; fi; setenv safemode.enabled; setenv ipreset.enabled; setenv consoleout.enabled; setenv nofpgaapp.enabled; setenv noapp.enabled; setenv pxeboot.enabled; setenv host_name; setenv primarymac; setenv language; setenv sshd.enabled; setenv cpld.safemode; setenv cpld.ipreset; setenv cpld.consoleout; setenv cpld.softboot; setenv cpld.resetbybutton;
+fdt_high=0x17FFFFFF
+fdtcontroladdr=1eb0c030
+fileaddr=8000000
+filesize=412d0c
+fpga_err=Failed to load an FPGA image.
+fpgaloadcmd=if test -n \\"$isnofpgaapp\\" -o $bootmode = safemode -o -n \\"$isforcedrecoverymode\\"; then loaddefaultbit=1; else if ext4load mmc 1:1 $verifyaddr user.bit.crc && ext4load mmc 1:1 $loadaddr user.bit.bin && md5sum -v $loadaddr $filesize *$verifyaddr; then if fpga load 0 $loadaddr $filesize; then fpgasuccess=1; else echo $fpga_err..(user) ; loaddefaultbit=1; fi; else loaddefaultbit=1; fi; fi; if test -n \\"$loaddefaultbit\\"; then if sf probe 0 0 0 && sf read $loadaddr $qspifpgasizeoffset 0x8; then setexpr.l fpgasize *$loadaddr; fi; if test -n \\"$fpgasize\\"; then if sf read $loadaddr $qspifpgabitoffset $fpgasize; then configfpga=1; fi; fi; fi; if test -n \\"$configfpga\\"; then if fpga load 0 $loadaddr $fpgasize; then fpgasuccess=1; fi; fi; if test -z \\"$fpgasuccess\\"; then echo $fpga_err; run recoverycmd; run recoverybootcmd;fi; run markhardbootcomplete;
+fpgasize=3dbafc
+hostname=NI-roboRIO2-0-03249427
+i2cbus=0
+initrd_high=0x17FF7FFF
+ipconfigcmd=if test \\"$dhcpenabled\\" -ne 0 -a -z \\"$forcedrecovery\\";then dhcpfail=0; dhcp || dhcpfail=1;else dhcpfail=-1;fi;if test \\"$linklocalenabled\\" -ne 0 -a $dhcpfail -ne 0 -o -n \\"$forcedrecovery\\";then llfail=0;linklocal || llfail=1;else llfail=-1;fi;if test $llfail -ne 0 -a $dhcpfail -ne 0; then setenv ipaddr $sipaddr; setenv netmask $snetmask; setenv gatewayip $sgatewayip; setenv dnsip $sdnsip; fi;
+ipresetcmd=echo Resetting primary Ethernet configuration; setenv dhcpenabled 1; setenv linklocalenabled 1; setenv sdnsip; setenv sgatewayip; setenv sipaddr; setenv snetmask; setenv mtu; setenv ncip 255.255.255.255; savesilent=$silent;setenv silent 1; saveenv; setenv silent $savesilent;
+linklocalenabled=1
+llipaddr=169.254.229.99
+loadaddr=0x8000000
+manufacturer=National Instruments
+markhardbootcomplete=i2c mw 0x40 1 0x20;
+nc=setenv stdout nc;setenv stdin nc
+ncinport=8473
+ncip=255.255.255.255
+ncoutport=7865
+preboot=setenv silent 1; i2c dev $i2cbus; run readsoftdip; run readcplddip; run readbootmode; run read_usb_otgsc_id;run evaldip; if test -n \\"$isforcedrecoverymode\\"; then if test -n \\"$isconsoleout\\"; then setenv silent; fi; forcedrecovery=1; run recoverycmd; else run fpgaloadcmd; run consolemultiplexcmd; run consoleoutcmd; if test -n \\"$isipreset\\"; then run ipresetcmd; fi; fi;
+primaryethaddr=00802F35C466
+pxesupport=1
+qspifpgabitoffset=0x420008
+qspifpgasizeoffset=0x420000
+readbootmode=i2c read 0x40 0x1F 1 $loadaddr; setexpr.b bootmodeval *$loadaddr \\& 0x3; if test $bootmodeval -eq 1; then bootmode=safemode; else bootmode=runmode; fi; setenv bootmodeval;
+readcplddip=i2c read 0x40 1 1 $loadaddr; setexpr.b cpld.safemode *$loadaddr \\& 0x01; setexpr.b cpld.ipreset *$loadaddr \\& 0x02; setexpr.b cpld.consoleout *$loadaddr \\& 0x04; setexpr.b cpld.softboot *$loadaddr \\& 0x20; i2c read 0x40 4 1 $loadaddr; setexpr.b cpld.resetbybutton *$loadaddr \\& 0x01;
+readsoftdip=if ext4load mmc 1:2 $loadaddr ni-rt.ini && ini systemsettings; then setenv safemode.enabled ${safemode.enabled:-false}; setenv ipreset.enabled ${ipreset.enabled:-false}; setenv consoleout.enabled ${consoleout.enabled:-false}; setenv nofpgaapp.enabled ${nofpgaapp.enabled:-false}; setenv pxeboot.enabled ${pxeboot.enabled:-false}; else setenv safemode.enabled false; setenv ipreset.enabled false; setenv consoleout.enabled false; setenv nofpgaapp.enabled false; setenv pxeboot.enabled false; fi;
+recovery_err=Safemode or FPGA is corrupt. Insert recovery USB and reboot.
+recoverybootcmd=if test -n \\"$savebootcmd\\"; then flags=${.flags}; setenv .flags bootcmd; setenv bootcmd \\"$savebootcmd\\"; setenv .flags $flags; fi; if test -n \\"$savebootdelay\\"; then setenv bootdelay $savebootdelay; fi;
+recoverycmd=echo Entering recovery mode!; run markhardbootcomplete; run stopwatchdog; dcache off; if test -n \\"$forcedrecovery\\"; then run resetenv && run ipresetcmd; fi;if usb start && fatload usb 0:auto $loadaddr recovery.cfg && iminfo && fdt addr $loadaddr && fdt get value recoverType /images/recover type && test $recoverType = script && fdt get value recoveryDeviceCode / DeviceCode && test $recoveryDeviceCode = $DeviceCode;then source $loadaddr:recover; elif test -n \\"$forcedrecovery\\"; then flags=${.flags} && savebootcmd=$bootcmd && setenv .flags bootcmd && setenv bootcmd \\"$recoverybootcmd\\" && setenv .flags $flags; savebootdelay=$bootdelay && setenv bootdelay -2; run setlederrorstatus; usb reset; run ipconfigcmd; run nc; setenv silent; while sleep 1; do echo "${DeviceCode:-<not-set>}, ${serial#:-<not-set>}, ${ethaddr:-<not-set>}, ${ipaddr:-<not-set>}, ${hostname:-<not-set>}, ${comment:-<not-set>}"; done; else run setlederrorstatus; echo $recovery_err; fi;
+resetenv=serial_save=${serial#} && wirelessRegionFactory_save=$wirelessRegionFactory && wireless_board_id_save=$wireless_board_id && usbgadgetethaddr_save=$usbgadgetethaddr && ethaddr_save=$ethaddr && env default -a && env set serial# $serial_save && env set .flags wirelessRegionFactory && env set wirelessRegionFactory $wirelessRegionFactory_save && env set .flags wireless_board_id && env set wireless_board_id $wireless_board_id_save && env set .flags usbgadgetethaddr && env set usbgadgetethaddr $usbgadgetethaddr_save && env set .flags ethaddr && env set ethaddr $ethaddr_save && setenv .flags;
+safemode_err=Failed to find a valid safemode image.
+sc=setenv stdout serial@80000000;setenv stderr serial@80000000;setenv stdin serial@80000000;
+sdboot=echo Copying Safemode from SD to RAM...; mmcinfo; fatload mmc 0 $loadaddr linux_safemode.itb; source $loadaddr:bootscript;
+serial#=03262BA9
+set_args=setenv bootargs ${consoleparam} root=/dev/mmcblk0p3 rw ${usb_gadget_args} rcu_nocbs=all rootdelay=1 $othbootargs
+setlederrorstatus=i2c mw 0x40 0x5 0xAA; i2c mw 0x40 0x6 0xAA;
+silent=1
+stderr=serial@00000000
+stdin=serial@00000000
+stdout=serial@00000000
+stopwatchdog=i2c mw 0x40 0x13 0x80;
+updateenv=env export -b $loadaddr; env default -a; env import -b $loadaddr;
+usbgadgetethaddr=00:80:2f:35:c4:65
+verify=n
+verifyaddr=0x10000000
+wl12xxnvs=begin-base64 444 /lib/firmware/ti-connectivity/wl1271-nvs.bin.gz`H4sICK4CAAAAA3dsMTI3MS1udnMuYmluAGPMDWEAAsZCMIUAjDMZv0OZzP+/`/2PAA57/YWVn5+Tm5RcWkZBWUmXQZzBksGBwYvBkCGCIYohhiGdIYIhg8Mdn`xIgGf//9+w+kGCGACA1MwthEVzEDzWD6DzSKiZUBbB4DJ4uEAAfD9/fP74ME`+O1R+QwM6HwgePONgUfixx8GDoEPPxi4RCj0GgiUMzYwyMorqalrSskrqaqq`i8nKKaioBuABjExAwCAqKiooKsonp0sFNwwdAACjiUGVkAMAAA==`====`
+writebootqspi=sf probe 0 0 0;sf erase 0 0x410000; sf write $loadaddr 0 0x120000; sf read $verifyaddr 0 0x120000; cmp.b $loadaddr $verifyaddr 0x120000;
+writefpgabit=sf probe 0 0 0;sf write $loadaddr $qspifpgabitoffset $filesize;sf read $verifyaddr $qspifpgabitoffset $filesize;cmp.b $loadaddr $verifyaddr $filesize;
+writefpgasize=sf probe 0 0 0;mw.l $loadaddr $filesize;sf write $loadaddr $qspifpgasizeoffset 0x8; sf read $verifyaddr $qspifpgasizeoffset 0x8; cmp.b $loadaddr $verifyaddr 0x8;

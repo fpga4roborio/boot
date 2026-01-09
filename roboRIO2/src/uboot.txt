@@ -1,0 +1,20 @@
+DeviceCode=0x7AAE
+DeviceDesc=roboRIO 2.0
+FPGADeviceCode=0x7AAF
+TargetClass=cRIO
+baudrate=115200
+bootargs=console=ttyS0,115200 root=/dev/mmcblk0p2 rw rcu_nocbs=all rootdelay=1 earlycon verbose
+bootcmd=ext4load mmc 1:1 $loadaddr image.ub; bootm $loadaddr;
+bootcount=28
+bootdelay=-2
+ethaddr=00:80:2f:35:c4:66
+fdt_high=0x17FFFFFF
+fdtcontroladdr=1eb0c030
+hostname=NI-roboRIO2-0-03249427
+initrd_high=0x17FF7FFF
+loadaddr=0x8000000
+manufacturer=National Instruments
+preboot=i2c dev 0; setenv stdout serial@80000000; setenv stderr serial@80000000; setenv stdin serial@80000000; if ext4load mmc 1:1 $loadaddr user.bit.bin; then fpga load 0 $loadaddr $filesize; i2c mw 0x40 1 0x20; fi;
+primaryethaddr=00802F35C466
+serial#=03262BA9
+usbgadgetethaddr=00:80:2f:35:c4:65
